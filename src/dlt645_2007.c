@@ -1,5 +1,5 @@
 /*************************************************
- Copyright (c) 2019, JiangSu Sfere.
+ Copyright (c) 2019
  All rights reserved.
  File name:     dlt645_2007.c
  Description:   DLT645 2007版本

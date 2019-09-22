@@ -1,3 +1,14 @@
+/*************************************************
+ Copyright (c) 2019
+ All rights reserved.
+ File name:     dlt645.c
+ Description:   
+ History:
+ 1. Version:    
+    Date:       2019-09-20
+    Author:     wangjunjie
+    Modify:     
+*************************************************/
 #include "dlt645_private.h"
 #include "dlt645_1997.h"
 #include "dlt645_2007.h"
@@ -16,7 +27,7 @@
  */
 int dlt645_receive_msg(dlt645_t *ctx, uint8_t *msg, uint32_t addr, uint32_t code, dlt645_protocal protocal)
 {
-    int msg_len = ctx->read(ctx->nfds, msg, ctx->timeout);
+    int msg_len = ctx->read(ctx, msg);
 
     if (protocal == DLT645_1997)
     {
@@ -48,7 +59,7 @@ int dlt645_send_msg(dlt645_t *ctx, uint8_t *msg, int len)
     msg[len - 1] = DL645_STOP_CODE;
     msg[len - 2] = _crc(msg, len - 2);
 
-    return ctx->write(ctx->nfds, msg, len);
+    return ctx->write(ctx, msg, len);
 }
 
 /**
@@ -64,18 +75,6 @@ void dlt645_set_addr(dlt645_t *ctx, uint8_t *addr)
     memcpy(ctx->addr, addr, DL645_ADDR_LEN);
 }
 
-/**
- * Name:    dlt645_set_nfds
- * Brief:   设置串口文件句柄
- * Input:
- *  @ctx:       645环境句柄
- *  @nfds:      文件句柄
- * Output:  None
- */
-void dlt645_set_nfds(dlt645_t *ctx, int nfds)
-{
-    ctx->nfds = nfds;
-}
 
 /**
  * Name:    dlt645_set_debug
@@ -91,33 +90,6 @@ int dlt645_set_debug(dlt645_t *ctx, int flag)
     return 0;
 }
 
-/**
- * Name:    dlt645_get_response_timeout
- * Brief:   获取645采集超时时间
- * Input:
- *  @ctx:       645环境句柄
- *  @timeout:   超时时间存储地址（单位：毫秒）
- * Output:  None
- */
-int dlt645_get_response_timeout(dlt645_t *ctx, uint16_t *timeout)
-{
-    *timeout = ctx->timeout;
-    return 0;
-}
-
-/**
- * Name:    dlt645_set_response_timeout
- * Brief:   设置645采集超时时间
- * Input:
- *  @ctx:       645环境句柄
- *  @timeout:   超时时间（单位：毫秒）
- * Output:  None
- */
-int dlt645_set_response_timeout(dlt645_t *ctx, uint16_t timeout)
-{
-    ctx->timeout = timeout;
-    return 0;
-}
 
 /**
  * Name:    dlt645_read_data（用户调用）

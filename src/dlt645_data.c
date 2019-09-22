@@ -1,5 +1,5 @@
 /*************************************************
- Copyright (c) 2019, JiangSu Sfere.
+ Copyright (c) 2019
  All rights reserved.
  File name:     dlt645_data.c
  Description:   DLT645 数据处理源文件
