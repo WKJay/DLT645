@@ -82,10 +82,7 @@ int dlt645_2007_parsing_data(uint32_t code, uint8_t *read_data, uint16_t len, ui
     case DIC_80000:
     case DIC_90000:
     {
-        int ival = data_package_translate_to_int(read_data,4);
-        float fval = ival / 100.00;
-        memcpy(real_val, &fval, 4);
-
+        dlt645_data_parse_by_format_to_float(read_data,4,"XXXXXX.XX",real_val);
         break;
     }
     case DIC_2010100:
@@ -95,20 +92,14 @@ int dlt645_2007_parsing_data(uint32_t code, uint8_t *read_data, uint16_t len, ui
     case DIC_20C0200:
     case DIC_20C0300:
     {
-        int ival = data_package_translate_to_int(read_data,2);
-        float fval = ival / 10.0;
-        memcpy(real_val, &fval, 4);
-
+        dlt645_data_parse_by_format_to_float(read_data,2,"XXX.X",real_val);
         break;
     }
     case DIC_2020100:
     case DIC_2020200:
     case DIC_2020300:
     {
-        int ival = data_package_translate_to_int(read_data,3);
-        float fval = ival / 1000.0;
-        memcpy(real_val, &fval, 4);
-
+        dlt645_data_parse_by_format_to_float(read_data,3,"XXX.XXX",real_val);
         break;
     }
     case DIC_2030000:
@@ -124,10 +115,7 @@ int dlt645_2007_parsing_data(uint32_t code, uint8_t *read_data, uint16_t len, ui
     case DIC_2050200:
     case DIC_2050300:
     {
-        int ival = data_package_translate_to_int(read_data,3);
-
-        float fval = ival / 10000.00;
-        memcpy(real_val, &fval, 4);
+        dlt645_data_parse_by_format_to_float(read_data,3,"XX.XXXX",real_val);
         break;
     }
     case DIC_2060000:
@@ -135,10 +123,12 @@ int dlt645_2007_parsing_data(uint32_t code, uint8_t *read_data, uint16_t len, ui
     case DIC_2060200:
     case DIC_2060300:
     {
-        int ival = data_package_translate_to_int(read_data,2);
-        float fval = ival / 1000.0;
-        memcpy(real_val, &fval, 4);
-
+        dlt645_data_parse_by_format_to_float(read_data,2,"X.XXX",real_val);
+        break;
+    }
+    case DIC_2800002:
+    {
+        dlt645_data_parse_by_format_to_float(read_data,2,"XX.XX",real_val);
         break;
     }
     case DIC_4000403:

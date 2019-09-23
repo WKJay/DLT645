@@ -108,18 +108,19 @@ int dlt645_read_data(dlt645_t *ctx,
                      uint8_t *read_data,
                      dlt645_protocal protocal)
 {
+    int rs = -1;
     switch (protocal)
     {
     case DLT645_1997:
-        return dlt645_1997_read_data(ctx, addr, code, read_data);
+        rs = dlt645_1997_read_data(ctx, addr, code, read_data);
         break;
     case DLT645_2007:
-        return dlt645_2007_read_data(ctx, addr, code, read_data);
+        rs = dlt645_2007_read_data(ctx, addr, code, read_data);
         break;
     default:
         DLT645_LOG("unrecognized protocal!\r\n");
         break;
     }
-    return -1;
+    return rs;
 }
 

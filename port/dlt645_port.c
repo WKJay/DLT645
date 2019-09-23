@@ -15,8 +15,6 @@
 
 //DLT645采集使用的串口名
 #define DLT645_SERIAL_NAME "uart4"
-//dlt645 采集测试标识符 （A相电压）
-#define DLT645_READ_TEST_CODE 0x2010100
 
 //DL/T 645硬件拓展结构体
 typedef struct
@@ -27,70 +25,79 @@ typedef struct
 
 static dlt645_port_t dlt645_port = {
     .dlt645_sem = RT_NULL,
-    .byte_timeout = 20,
+    .byte_timeout = 10, //接收字节间超时时间
 };
 //dlt645 采集设备句柄
 static rt_device_t dlt645_device = RT_NULL;
 //dlt645 采集接收信号量
 static struct rt_semaphore dlt645_receive_sem;
-//dlt645 环境结构体
-dlt645_t dlt645;
 //串口配置参数
 struct serial_configure config = RT_SERIAL_CONFIG_DEFAULT;
+//dlt645 环境结构体
+dlt645_t dlt645;
 
 //串口接收数据回调函数
 rt_err_t uart_handler(rt_device_t dev, rt_size_t size)
 {
+    //接收到一个数据释放信号量
     rt_sem_release(&dlt645_receive_sem);
     return RT_EOK;
 }
 
-//硬件层接收函数
+/**
+ * Name:    dlt645_hw_read
+ * Brief:   dlt645 硬件层接收数据
+ * Input:
+ *  @ctx:   645运行环境
+ *  @msg:   接收数据存放地址
+ * Output:  None
+ */
 static int dlt645_hw_read(dlt645_t *ctx, uint8_t *msg)
 {
     int read_len = 0;
+    //等待串口接收到数据
     if(rt_sem_take(&dlt645_receive_sem, 1000) == -RT_ETIMEOUT)
     {
         return 0;
     }
+    //每次读取一个字节的数据
     while (rt_device_read(dlt645_device, 0, msg + read_len, 1) == 1)
     {
         read_len ++;
-        //读取超时标志一次读取完成
+        //读取超时标志一帧数据读取完成
         if (rt_sem_take(&dlt645_receive_sem, ((dlt645_port_t *)(ctx->port_data))->byte_timeout) == -RT_ETIMEOUT)
         {
             break;
         }
     }
-
     return read_len;
 }
 
-//硬件层发送函数
+/**
+ * Name:    dlt645_hw_write
+ * Brief:   dlt645 硬件层发送数据
+ * Input:
+ *  @ctx:   645运行环境
+ *  @buf:   待发送数据
+ *  @len:   发送长度
+ * Output:  None
+ */
 static int dlt645_hw_write(dlt645_t *ctx, uint8_t *buf, uint16_t len)
 {
+    //串口发送数据
     return rt_device_write(dlt645_device,0,buf,len);
 }
 
-static void dlt645_read_test(void)
-{
-    uint8_t read_buf[4];
-    rt_memset(read_buf, 0, 4);
 
-    if(dlt645_read_data(&dlt645,1,DLT645_READ_TEST_CODE,read_buf,DLT645_2007) > 0)
-    {
-        printf("读取成功,A相电压值为: %.1f \r\n",*(float *)read_buf);
-    }
-    else
-    {
-        rt_kprintf("读取失败\r\n");
-    }
-    
-}
-MSH_CMD_EXPORT(dlt645_read_test , dlt645 protocal read test);
-
+/**
+ * Name:    dlt645_port_init
+ * Brief:   645采集硬件层初始化
+ * Input:   None
+ * Output:  None
+ */
 int dlt645_port_init(void)
 {
+    //串口初始化
     dlt645_device = rt_device_find(DLT645_SERIAL_NAME);
     if (dlt645_device == RT_NULL)
     {
@@ -113,6 +120,7 @@ int dlt645_port_init(void)
         rt_kprintf("device %s open success \r\n", DLT645_SERIAL_NAME);
     }
 
+    //信号量初始化
     if (rt_sem_init(&dlt645_receive_sem, "receive_sem", 0, RT_IPC_FLAG_FIFO) == RT_EOK)
     {
         dlt645_port.dlt645_sem = &dlt645_receive_sem;
@@ -122,12 +130,12 @@ int dlt645_port_init(void)
         return -RT_ERROR;
     }
 
-    /* 设置接收回调函数 */
+    //设置串口接收回调函数
     rt_device_set_rx_indicate(dlt645_device, uart_handler);
+    //485控制引脚初始化
     rt_pin_mode(GET_PIN(A,15),PIN_MODE_OUTPUT);
     return  RT_EOK;
 }
-INIT_APP_EXPORT(dlt645_port_init);
 
 //645结构体注册
 static dlt645_t dlt645 = {

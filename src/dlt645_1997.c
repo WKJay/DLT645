@@ -66,19 +66,14 @@ static int dlt645_1997_parsing_data(uint32_t code, uint8_t *read_data, uint16_t 
     case DIC_B692:
     case DIC_B693:
     {
-        int ival = data_package_translate_to_int(read_data,2);
-        float fval = ival / 1.0;
-        memcpy(real_val, &fval, 4);
+        dlt645_data_parse_by_format_to_float(read_data, 2, "XXX", real_val);
         break;
     }
     case DIC_B621:
     case DIC_B622:
     case DIC_B623:
     {
-        int ival = data_package_translate_to_int(read_data,2);
-        float fval = ival / 100.00;
-        memcpy(real_val, &fval, 4);
-
+        dlt645_data_parse_by_format_to_float(read_data, 2, "XX.XX", real_val);
         break;
     }
     case DIC_B630:
@@ -86,9 +81,8 @@ static int dlt645_1997_parsing_data(uint32_t code, uint8_t *read_data, uint16_t 
     case DIC_B632:
     case DIC_B633:
     {
-        int ival = data_package_translate_to_int(read_data,3);
-        float fval = ival / 10000.0;
-        memcpy(real_val, &fval, 4);
+        dlt645_data_parse_by_format_to_float(read_data, 3, "XX.XXXX", real_val);
+        break;
     }
     default:
     {

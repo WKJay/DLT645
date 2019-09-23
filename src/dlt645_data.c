@@ -10,6 +10,7 @@
     Modify:     
 *************************************************/
 #include "dlt645_private.h"
+#include <string.h>
 #include <math.h>
 
 //字节位置枚举类型
@@ -191,7 +192,40 @@ int data_package_translate_to_int(uint8_t *read_data, uint16_t len)
                 break;
             }
         } while (current_byte_part != BYTE_RESET);
-        current_index ++;
+        current_index++;
     }
     return i_value;
+}
+
+/**
+ * Name:    dlt645_data_parse_by_format_to_float
+ * Brief:   根据数据格式将645协议读取的数据转换为真实数据并存储
+ *          ！真实数据为浮点数据，需要注意的是无论读取数据长度是多少，存储数据长度都应是4字节
+ * Input:
+ *  @read_data:     645协议读取的数据
+ *  @read_len:      读取数据的长度
+ *  @data_format:   转换的数据格式，如 XX.XX,XX.XXX
+ * Output:  转换成功返回0，失败返回-1
+ */
+int dlt645_data_parse_by_format_to_float(uint8_t *read_data, uint16_t read_len, const char *data_format, uint8_t *store_address)
+{
+    //权值
+    int num_weight = 0;
+    int ival = data_package_translate_to_int(read_data, read_len);
+
+    for (int i = 0; i < strlen(data_format); i++)
+    {
+        if (*(data_format + i) == '.')
+        {
+            num_weight = strlen(data_format) - i - 1;
+            if(num_weight < 0)
+            {
+                return -1;
+            }
+            break;
+        }
+    }
+    float fval = ival / pow(10,num_weight);
+    memcpy(store_address, &fval, 4);
+    return 0;
 }
