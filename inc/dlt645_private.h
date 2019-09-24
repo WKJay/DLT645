@@ -22,8 +22,6 @@
 #define DL645_WR_LEN 50     //写入数据命令的长度
 #define DL645_RESP_LEN 60   //读取数据命令的长度
 
-
-
 #define C_CODE_MASK 0x1f
 #define C_CODE_NULL 0x00
 #define C_CODE_BRC 0x08 //广播校时
@@ -59,17 +57,14 @@
 #define DL645_ERR_DATA 0x02  //无请求数据
 #define DL645_ERR_OTHER 0x01 //其他错误
 
-
 //645 公共校验
-extern int dlt645_common_check(uint8_t *msg, int len, uint32_t addr);
+extern int dlt645_common_check(uint8_t *msg, int len, uint8_t *addr);
 //645 和校验
 extern int _crc(uint8_t *msg, int len);
 //645 调用底层接口接收数据
-extern int dlt645_receive_msg(dlt645_t *ctx, uint8_t *msg, uint32_t addr, uint32_t code, dlt645_protocal protocal);
+extern int dlt645_receive_msg(dlt645_t *ctx, uint8_t *msg, uint32_t code, dlt645_protocal protocal);
 //645 调用底层接口发送
 extern int dlt645_send_msg(dlt645_t *ctx, uint8_t *msg, int len);
-//十进制转BCD码
-extern uint32_t dec2bcd(uint32_t val);
 //将接收到的dlt645数据包中的数据转化为整数
 extern int data_package_translate_to_int(uint8_t *read_data, uint16_t len);
 //根据数据格式将645协议读取的数据转换为真实数据并存储

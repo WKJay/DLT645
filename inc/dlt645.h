@@ -29,8 +29,12 @@ typedef enum
     DLT645_1997
 } dlt645_protocal;
 
+//设置从机地址
 extern void dlt645_set_addr(dlt645_t *ctx, uint8_t *addr);
+//设置调试开关
 extern int dlt645_set_debug(dlt645_t *ctx, int flag);
-extern int dlt645_read_data(dlt645_t *ctx, uint32_t addr, uint32_t code, uint8_t *read_data, dlt645_protocal protocal);
-extern int dlt645_write_data(dlt645_t *ctx, uint32_t addr, uint32_t code, uint8_t *write_data, uint8_t write_len);
+//数据采集
+extern int dlt645_read_data(dlt645_t *ctx, uint32_t code, uint8_t *read_data, dlt645_protocal protocal);
+//十进制转BCD码
+extern uint32_t dec2bcd(uint32_t val);
 #endif

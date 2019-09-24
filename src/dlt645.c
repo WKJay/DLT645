@@ -25,17 +25,17 @@
  *  @protocal:  645协议类型  
  * Output:  接收成功：0，接收失败：-1
  */
-int dlt645_receive_msg(dlt645_t *ctx, uint8_t *msg, uint32_t addr, uint32_t code, dlt645_protocal protocal)
+int dlt645_receive_msg(dlt645_t *ctx, uint8_t *msg, uint32_t code, dlt645_protocal protocal)
 {
     int msg_len = ctx->read(ctx, msg);
 
     if (protocal == DLT645_1997)
     {
-        return dlt645_1997_recv_check(msg, msg_len, addr, code);
+        return dlt645_1997_recv_check(msg, msg_len, ctx->addr, code);
     }
     else if (protocal == DLT645_2007)
     {
-        return dlt645_2007_recv_check(msg, msg_len, addr, code);
+        return dlt645_2007_recv_check(msg, msg_len, ctx->addr, code);
     }
     else
     {
@@ -72,7 +72,15 @@ int dlt645_send_msg(dlt645_t *ctx, uint8_t *msg, int len)
  */
 void dlt645_set_addr(dlt645_t *ctx, uint8_t *addr)
 {
-    memcpy(ctx->addr, addr, DL645_ADDR_LEN);
+    uint8_t addr_temp[6] ;
+    memset(addr_temp,0,6);
+    
+    //转换字节序
+    for (int i=0;i<6;i++)
+    {
+        addr_temp[5-i] = addr[i];
+    }
+    memcpy(ctx->addr, addr_temp, DL645_ADDR_LEN);
 }
 
 
@@ -103,7 +111,6 @@ int dlt645_set_debug(dlt645_t *ctx, int flag)
  * Output:  成功返回数据长度，失败返回-1
  */
 int dlt645_read_data(dlt645_t *ctx,
-                     uint32_t addr,
                      uint32_t code,
                      uint8_t *read_data,
                      dlt645_protocal protocal)
@@ -112,10 +119,10 @@ int dlt645_read_data(dlt645_t *ctx,
     switch (protocal)
     {
     case DLT645_1997:
-        rs = dlt645_1997_read_data(ctx, addr, code, read_data);
+        rs = dlt645_1997_read_data(ctx, code, read_data);
         break;
     case DLT645_2007:
-        rs = dlt645_2007_read_data(ctx, addr, code, read_data);
+        rs = dlt645_2007_read_data(ctx, code, read_data);
         break;
     default:
         DLT645_LOG("unrecognized protocal!\r\n");

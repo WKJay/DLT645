@@ -23,7 +23,7 @@
  *  @code:  操作码
  * Output:  校验成功：0 ，失败 -1
  */
-int dlt645_1997_recv_check(uint8_t *msg, int len, uint32_t addr, uint32_t code)
+int dlt645_1997_recv_check(uint8_t *msg, int len, uint8_t* addr, uint32_t code)
 {
     if (dlt645_common_check(msg, len, addr) < 0)
     {
@@ -107,7 +107,6 @@ static int dlt645_1997_parsing_data(uint32_t code, uint8_t *read_data, uint16_t 
  * Output:  成功返回数据长度，失败返回-1
  */
 int dlt645_1997_read_data(dlt645_t *ctx,
-                          uint32_t addr,
                           uint32_t code,
                           uint8_t *read_data)
 {
@@ -117,9 +116,7 @@ int dlt645_1997_read_data(dlt645_t *ctx,
     memset(read_buf, 0, sizeof(read_buf));
     memset(send_buf, 0, sizeof(send_buf));
 
-    uint32_t dev_addr = dec2bcd(addr);
-
-    memcpy(send_buf + 1, &dev_addr, DL645_ADDR_LEN - 2);
+    memcpy(send_buf + 1, ctx->addr, DL645_ADDR_LEN);
     send_buf[DL645_CONTROL_POS] = DL645_1997_C_RD;
     send_buf[DL645_LEN_POS] = 2;
 
@@ -134,7 +131,7 @@ int dlt645_1997_read_data(dlt645_t *ctx,
         return -1;
     }
 
-    if (dlt645_receive_msg(ctx, read_buf, dev_addr, code, DLT645_1997) < 0)
+    if (dlt645_receive_msg(ctx, read_buf, code, DLT645_1997) < 0)
     {
         DLT645_LOG("receive msg error!\n");
         return -1;

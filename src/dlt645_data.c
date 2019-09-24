@@ -48,7 +48,7 @@ int _crc(uint8_t *msg, int len)
  *  @addr:  从站地址
  * Output:  校验成功：0，校验失败：-1
  */
-int dlt645_common_check(uint8_t *msg, int len, uint32_t addr)
+int dlt645_common_check(uint8_t *msg, int len, uint8_t *addr)
 {
     //数据包长度校验
     if (len < 7)
@@ -83,7 +83,7 @@ int dlt645_common_check(uint8_t *msg, int len, uint32_t addr)
         return msg[len - 3];
     }
     //从站地址校验
-    if (*((uint32_t *)(msg + 1)) != addr)
+    if (memcmp(msg + 1, addr, 6) != 0)
     {
         return -1;
     }
@@ -93,14 +93,15 @@ int dlt645_common_check(uint8_t *msg, int len, uint32_t addr)
 
 /**
  * Name:    dec2bcd
- * Brief:   十进制转BCD码
+* Brief:   十进制转BCD码（目前支持32位数字大小）
  * Input:
  *  @val:   十进制值
  * Output:  BCD码值
  */
 uint32_t dec2bcd(uint32_t val)
 {
-    uint32_t data;
+    uint32_t data = 0;
+
     if (val < 100)
     {
         uint8_t byte0 = val % 10;
@@ -218,14 +219,14 @@ int dlt645_data_parse_by_format_to_float(uint8_t *read_data, uint16_t read_len, 
         if (*(data_format + i) == '.')
         {
             num_weight = strlen(data_format) - i - 1;
-            if(num_weight < 0)
+            if (num_weight < 0)
             {
                 return -1;
             }
             break;
         }
     }
-    float fval = ival / pow(10,num_weight);
+    float fval = ival / pow(10, num_weight);
     memcpy(store_address, &fval, 4);
     return 0;
 }
