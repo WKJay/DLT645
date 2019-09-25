@@ -50,11 +50,18 @@ rt_err_t uart_handler(rt_device_t dev, rt_size_t size)
  * Input:
  *  @ctx:   645运行环境
  *  @msg:   接收数据存放地址
- * Output:  None
+ *  @len:   数据最大接收长度 
+ * Output:  读取数据的长度
  */
-static int dlt645_hw_read(dlt645_t *ctx, uint8_t *msg)
+static int dlt645_hw_read(dlt645_t *ctx, uint8_t *msg ,uint16_t len)
 {
+    //实际接收长度
     int read_len = 0;
+    //清缓存变量
+    uint8_t buf = 0;
+    
+    //清空缓存
+    while(rt_device_read(dlt645_device,0,&buf,1));
     //等待串口接收到数据
     if(rt_sem_take(&dlt645_receive_sem, 1000) == -RT_ETIMEOUT)
     {
@@ -63,7 +70,14 @@ static int dlt645_hw_read(dlt645_t *ctx, uint8_t *msg)
     //每次读取一个字节的数据
     while (rt_device_read(dlt645_device, 0, msg + read_len, 1) == 1)
     {
-        read_len ++;
+        if(read_len > len)
+        {
+            return 0;
+        }
+        else
+        {
+            read_len ++;
+        }
         //读取超时标志一帧数据读取完成
         if (rt_sem_take(&dlt645_receive_sem, ((dlt645_port_t *)(ctx->port_data))->byte_timeout) == -RT_ETIMEOUT)
         {
@@ -80,7 +94,7 @@ static int dlt645_hw_read(dlt645_t *ctx, uint8_t *msg)
  *  @ctx:   645运行环境
  *  @buf:   待发送数据
  *  @len:   发送长度
- * Output:  None
+ * Output:  实际发送的字节数，错误返回-1
  */
 static int dlt645_hw_write(dlt645_t *ctx, uint8_t *buf, uint16_t len)
 {

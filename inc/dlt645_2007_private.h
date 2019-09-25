@@ -2,9 +2,30 @@
 #define __DLT645_2007_PRIVATE_H
 
 
-#define DL645_2007_RD_LEN 16 //读取数据命令的长度
-#define DL645_2007_C_RD 0x11 //读数据操作码
-#define DL645_2007_C_WR 0x14 //写数据操作码
+#define DL645_2007_RD_CMD_LEN 16 //读取数据命令的长度
+
+//功能码
+#define C_2007_CODE_BRC 0x08    //广播校时
+#define C_2007_CODE_RD 0X11     //读数据
+#define C_2007_CODE_RDM 0x12    //读后续数据
+#define C_2007_CODE_RDA 0x13    //读通信地址
+#define C_2007_CODE_WR 0x14     //写数据
+#define C_2007_CODE_WRA 0x15    //写通信地址
+#define C_2007_CODE_DJ 0x16     //冻结
+#define C_2007_CODE_BR 0x17     //更改通信速率
+#define C_2007_CODE_PD 0x18     //修改密码
+#define C_2007_CODE_XL 0x19     //最大需量清零
+#define C_2007_CODE_DB 0x1a     //电表清零
+#define C_2007_CODE_MSG 0x1b    //事件清零
+
+
+#define ERR_2007_RATE 0x40  //费率数超
+#define ERR_2007_DAY 0x20   //日时段数超
+#define ERR_2007_YEAR 0x10  //年时区数超
+#define ERR_2007_BR 0x08    //通信速率不能更改
+#define ERR_2007_PD 0x04    //密码错误/未授权
+#define ERR_2007_DATA 0x02  //无请求数据
+#define ERR_2007_OTHER 0x01 //其他错误
 
 /*DLT 645 2007数据标识*/
 #define DIC_0 0x0         //组合有功总电能

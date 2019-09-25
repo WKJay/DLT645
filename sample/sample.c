@@ -31,7 +31,7 @@ static void dlt645_read_test(void)
     //设置从机地址
     dlt645_set_addr(&dlt645,test_addr);
     
-    //if(dlt645_read_data(&dlt645,1,DLT645_1997_READ_TEST_CODE,read_buf,DLT645_1997) > 0) //1997采集测试
+    //if(dlt645_read_data(&dlt645,DLT645_1997_READ_TEST_CODE,read_buf,DLT645_1997) > 0) //1997采集测试
     if(dlt645_read_data(&dlt645,DLT645_2007_READ_TEST_CODE,read_buf,DLT645_2007) > 0)  //2007采集测试
     {
         printf("读取成功,A相电压值为: %.2f \r\n",*(float *)read_buf);

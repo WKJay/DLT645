@@ -19,7 +19,7 @@ typedef struct dlt645
     uint8_t addr[6];    //从机地址
     uint8_t debug;      //调试标志
     int (*write)(struct dlt645 *ctx, uint8_t *buf, uint16_t len);     //底层写函数
-    int (*read) (struct dlt645 *ctx, uint8_t *msg);                   //底层读函数
+    int (*read) (struct dlt645 *ctx, uint8_t *msg, uint16_t len);     //底层读函数
     void *port_data;                                            //移植层拓展接口
 } dlt645_t;
 

@@ -20,14 +20,15 @@
  * Input:
  *  @ctx:       645环境句柄
  *  @msg:       数据包存储地址
+ *  @len:       最大接收长度
  *  @addr:      从站地址
  *  @code:      数据标识   
  *  @protocal:  645协议类型  
  * Output:  接收成功：0，接收失败：-1
  */
-int dlt645_receive_msg(dlt645_t *ctx, uint8_t *msg, uint32_t code, dlt645_protocal protocal)
+int dlt645_receive_msg(dlt645_t *ctx, uint8_t *msg, uint16_t len, uint32_t code, dlt645_protocal protocal)
 {
-    int msg_len = ctx->read(ctx, msg);
+    int msg_len = ctx->read(ctx, msg, len);
 
     if (protocal == DLT645_1997)
     {
