@@ -98,7 +98,7 @@ int dlt645_common_check(uint8_t *msg, int len, uint8_t *addr)
  *  @val:   十进制值
  * Output:  BCD码值
  */
-uint32_t dec2bcd(uint32_t val)
+uint32_t dec_to_bcd(uint32_t val)
 {
     uint32_t data = 0;
 
@@ -151,6 +151,41 @@ uint32_t dec2bcd(uint32_t val)
                (byte1 << 4) + byte0;
     }
     return data;
+}
+
+/**
+ * Name:    str_to_bcd
+ * Brief:   字符串转BCD形式
+ * Input:
+ *  @str:               要转换的字符串
+ *  @bcd_store_address: 转换后的存储地址
+ *  @bcd_len:           BCD码总长度
+ * Output:  成功0，失败-1
+ */
+int str_to_bcd(char *str, uint8_t *bcd_store_address, uint16_t bcd_len)
+{
+    //字符串偏移
+    int str_pos = bcd_len * 2 - strlen(str);
+    //字符串比BCD码长度长
+    if (str_pos < 0)
+    {
+        return -1;
+    }
+    memset(bcd_store_address, 0, bcd_len);
+
+    for (int i = 0; i < strlen(str); i++)
+    {
+        if (str[i] >= '0' && str[i] <= '9')
+        {
+            bcd_store_address[(i + str_pos) / 2] |= (str[i] - '0') << (4 * ((i + 1 + (strlen(str) % 2)) % 2));
+        }
+        else
+        {
+            //当前字符不为数字，返回错误
+            return -1;
+        }
+    }
+    return 0;
 }
 
 /**

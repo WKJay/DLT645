@@ -221,9 +221,7 @@ int dlt645_write_data(dlt645_t *ctx,
     memset(read_buf, 0, sizeof(read_buf));
     memset(send_buf, 0, sizeof(send_buf));
 
-    uint32_t dev_addr = dec2bcd(addr);
-
-    memcpy(send_buf + 1, &dev_addr, DL645_ADDR_LEN - 2);
+    memcpy(send_buf + 1, ctx->addr, DL645_ADDR_LEN);
 
     send_buf[DL645_CONTROL_POS] = DL645_2007_C_WR;
     send_buf[DL645_LEN_POS] = 12 + write_len;

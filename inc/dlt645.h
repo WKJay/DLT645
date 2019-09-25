@@ -35,6 +35,9 @@ extern void dlt645_set_addr(dlt645_t *ctx, uint8_t *addr);
 extern int dlt645_set_debug(dlt645_t *ctx, int flag);
 //数据采集
 extern int dlt645_read_data(dlt645_t *ctx, uint32_t code, uint8_t *read_data, dlt645_protocal protocal);
-//十进制转BCD码
-extern uint32_t dec2bcd(uint32_t val);
+//十进制转BCD码(32位)
+extern uint32_t dec_to_bcd(uint32_t val);
+//字符串转BCD形式
+extern int str_to_bcd(char *str, uint8_t *bcd_store_address, uint16_t bcd_len);
+
 #endif

@@ -72,17 +72,16 @@ int dlt645_send_msg(dlt645_t *ctx, uint8_t *msg, int len)
  */
 void dlt645_set_addr(dlt645_t *ctx, uint8_t *addr)
 {
-    uint8_t addr_temp[6] ;
-    memset(addr_temp,0,6);
-    
+    uint8_t addr_temp[6];
+    memset(addr_temp, 0, 6);
+
     //转换字节序
-    for (int i=0;i<6;i++)
+    for (int i = 0; i < 6; i++)
     {
-        addr_temp[5-i] = addr[i];
+        addr_temp[5 - i] = addr[i];
     }
     memcpy(ctx->addr, addr_temp, DL645_ADDR_LEN);
 }
-
 
 /**
  * Name:    dlt645_set_debug
@@ -97,7 +96,6 @@ int dlt645_set_debug(dlt645_t *ctx, int flag)
     ctx->debug = flag;
     return 0;
 }
-
 
 /**
  * Name:    dlt645_read_data（用户调用）
@@ -130,4 +128,3 @@ int dlt645_read_data(dlt645_t *ctx,
     }
     return rs;
 }
-
