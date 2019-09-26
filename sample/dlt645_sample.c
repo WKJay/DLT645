@@ -10,6 +10,8 @@
     Modify:     
 *************************************************/
 #include "dlt645.h"
+#include "rtthread.h"
+#include "stdio.h"
 #include "dlt645_port.h"
 
 //dlt645 采集测试标识符 （A相电压）
