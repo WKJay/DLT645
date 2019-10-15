@@ -4,8 +4,6 @@ from building import *
 
 cwd = GetCurrentDir()
 src = Glob("src/*")
-src += Glob('port/dlt645_port.c')
-
 
 # add dlt645 sample
 if GetDepend('DLT645_USING_SAMPLE'):
