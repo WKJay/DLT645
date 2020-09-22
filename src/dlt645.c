@@ -12,7 +12,7 @@
 #include "dlt645_private.h"
 #include "dlt645_1997.h"
 #include "dlt645_2007.h"
-#include "string.h"
+#include <string.h>
 
 /**
  * Name:    dlt645_receive_msg
@@ -28,15 +28,27 @@
  */
 int dlt645_receive_msg(dlt645_t *ctx, uint8_t *msg, uint16_t len, uint32_t code, dlt645_protocal protocal)
 {
-    int msg_len = ctx->read(ctx, msg, len);
+    int rc;
+    rc = ctx->backend->select(ctx);
+    if (rc < 0)
+    {
+        return -1;
+    }
+    else if (rc == 0)
+    {
+        DLT645_LOG("receive timeout\r\n");
+        return -1;
+    }
+
+    rc = ctx->backend->read(ctx, msg, len);
 
     if (protocal == DLT645_1997)
     {
-        return dlt645_1997_recv_check(msg, msg_len, ctx->addr, code);
+        return dlt645_1997_recv_check(msg, rc, ctx->addr, code);
     }
     else if (protocal == DLT645_2007)
     {
-        return dlt645_2007_recv_check(msg, msg_len, ctx->addr, code);
+        return dlt645_2007_recv_check(msg, rc, ctx->addr, code);
     }
     else
     {
@@ -60,7 +72,7 @@ int dlt645_send_msg(dlt645_t *ctx, uint8_t *msg, int len)
     msg[len - 1] = DL645_STOP_CODE;
     msg[len - 2] = _crc(msg, len - 2);
 
-    return ctx->write(ctx, msg, len);
+    return ctx->backend->write(ctx, msg, len);
 }
 
 /**
@@ -115,6 +127,7 @@ int dlt645_read_data(dlt645_t *ctx,
                      dlt645_protocal protocal)
 {
     int rs = -1;
+
     switch (protocal)
     {
     case DLT645_1997:

@@ -2,6 +2,8 @@
 #define _DLT645_H
 
 #include <stdint.h>
+#include <sys/select.h>
+#include <sys/time.h>
 
 #define DL645_MAX_READ_LEN 200 //读数据的最大数据长度
 #define DL645_MAX_WRITE_LEN 50 //写数据的最大数据长度
@@ -13,14 +15,25 @@
 #define dlt_malloc rt_malloc
 #define dlt_free rt_free
 
+#define DLT645_DEBUG 
+
+typedef struct dlt645 dlt645_t;
+
+typedef struct _dlt645_backend
+{
+    int (*select)(dlt645_t *ctx);
+    int (*write)(struct dlt645 *ctx, uint8_t *buf, uint16_t len); //底层写函数
+    int (*read)(struct dlt645 *ctx, uint8_t *msg, uint16_t len);  //底层读函数
+} dlt645_backend_t;
+
 //DLT645 环境结构体
 typedef struct dlt645
 {
-    uint8_t addr[6];    //从机地址
-    uint8_t debug;      //调试标志
-    int (*write)(struct dlt645 *ctx, uint8_t *buf, uint16_t len);     //底层写函数
-    int (*read) (struct dlt645 *ctx, uint8_t *msg, uint16_t len);     //底层读函数
-    void *port_data;                                            //移植层拓展接口
+    uint8_t addr[6]; //从机地址
+    uint8_t debug;   //调试标志
+    uint32_t response_timeout;
+    void *port_data; //移植层拓展接口
+    const dlt645_backend_t *backend;
 } dlt645_t;
 
 typedef enum

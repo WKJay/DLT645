@@ -9,39 +9,51 @@
     Author:     wangjunjie
     Modify:     
 *************************************************/
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <termios.h>
+#include <signal.h>
 #include "dlt645.h"
-#include "rtthread.h"
-#include "drv_gpio.h"
 
 //DLT645采集使用的串口名
-#define DLT645_SERIAL_NAME "uart4"
+#define DLT645_SERIAL_NAME "/dev/ttyUSB0"
 
 //DL/T 645硬件拓展结构体
 typedef struct
 {
-    rt_sem_t dlt645_sem;   //用于串口接收的信号量
-    uint32_t byte_timeout; //字节间的超时时间
+    int fd;
 } dlt645_port_t;
 
 static dlt645_port_t dlt645_port = {
-    .dlt645_sem = RT_NULL,
-    .byte_timeout = 10, //接收字节间超时时间
-};
-//dlt645 采集设备句柄
-static rt_device_t dlt645_device = RT_NULL;
-//dlt645 采集接收信号量
-static struct rt_semaphore dlt645_receive_sem;
-//串口配置参数
-struct serial_configure config = RT_SERIAL_CONFIG_DEFAULT;
+    .fd = 0};
+
 //dlt645 环境结构体
 dlt645_t dlt645;
 
-//串口接收数据回调函数
-rt_err_t uart_handler(rt_device_t dev, rt_size_t size)
+static int dlt645_port_select(dlt645_t *ctx)
 {
-    //接收到一个数据释放信号量
-    rt_sem_release(&dlt645_receive_sem);
-    return RT_EOK;
+    int s_rc;
+    fd_set rfds;
+    struct timeval tv;
+    dlt645_port_t *port = ctx->port_data;
+
+    FD_ZERO(&rfds);
+    FD_SET(port->fd, &rfds);
+    tv.tv_sec = ctx->response_timeout / 1000;
+    tv.tv_usec = (ctx->response_timeout % 1000) * 1000;
+
+    s_rc = select(port->fd + 1, &rfds, NULL, NULL, &tv);
+    if (s_rc < 0)
+    {
+        return -1;
+    }
+    else
+    {
+        return s_rc;
+    }
 }
 
 /**
@@ -53,37 +65,14 @@ rt_err_t uart_handler(rt_device_t dev, rt_size_t size)
  *  @len:   数据最大接收长度 
  * Output:  读取数据的长度
  */
-static int dlt645_hw_read(dlt645_t *ctx, uint8_t *msg ,uint16_t len)
+static int dlt645_hw_read(dlt645_t *ctx, uint8_t *msg, uint16_t len)
 {
     //实际接收长度
     int read_len = 0;
-    //清缓存变量
-    uint8_t buf = 0;
-    
-    //清空缓存
-    while(rt_device_read(dlt645_device,0,&buf,1));
-    //等待串口接收到数据
-    if(rt_sem_take(&dlt645_receive_sem, 1000) == -RT_ETIMEOUT)
-    {
-        return 0;
-    }
-    //每次读取一个字节的数据
-    while (rt_device_read(dlt645_device, 0, msg + read_len, 1) == 1)
-    {
-        if(read_len > len)
-        {
-            return 0;
-        }
-        else
-        {
-            read_len ++;
-        }
-        //读取超时标志一帧数据读取完成
-        if (rt_sem_take(&dlt645_receive_sem, ((dlt645_port_t *)(ctx->port_data))->byte_timeout) == -RT_ETIMEOUT)
-        {
-            break;
-        }
-    }
+
+    dlt645_port_t *port = ctx->port_data;
+    read_len = read(port->fd, msg, len);
+    printf("read %d size\r\n", read_len);
     return read_len;
 }
 
@@ -98,10 +87,21 @@ static int dlt645_hw_read(dlt645_t *ctx, uint8_t *msg ,uint16_t len)
  */
 static int dlt645_hw_write(dlt645_t *ctx, uint8_t *buf, uint16_t len)
 {
-    //串口发送数据
-    return rt_device_write(dlt645_device,0,buf,len);
+    dlt645_port_t *port = ctx->port_data;
+    int write_len = 0;
+
+    write_len = write(port->fd, buf, len);
+    return write_len;
 }
 
+void port_exit(int signo)
+{
+    dlt645_port_t *port = dlt645.port_data;
+    if (port->fd > 0)
+        close(port->fd);
+    printf("\r\nclose %s\r\n", DLT645_SERIAL_NAME);
+    _exit(0);
+}
 
 /**
  * Name:    dlt645_port_init
@@ -111,50 +111,55 @@ static int dlt645_hw_write(dlt645_t *ctx, uint8_t *buf, uint16_t len)
  */
 int dlt645_port_init(void)
 {
+    dlt645_port_t *port = dlt645.port_data;
+    signal(SIGINT, port_exit);
     //串口初始化
-    dlt645_device = rt_device_find(DLT645_SERIAL_NAME);
-    if (dlt645_device == RT_NULL)
+    port->fd = open(DLT645_SERIAL_NAME, O_RDWR | O_NOCTTY);
+    if (port->fd < 0)
     {
-        rt_kprintf("cannot find device %s \r\n", DLT645_SERIAL_NAME);
-        return -RT_ERROR;
-    }
-    if (rt_device_open(dlt645_device, RT_DEVICE_FLAG_INT_RX) != RT_EOK)
-    {
-        rt_kprintf("cannot open device %s \r\n", DLT645_SERIAL_NAME);
-        return -RT_ERROR;
+        printf("cannot open device %s \r\n", DLT645_SERIAL_NAME);
+        return -1;
     }
     else
     {
-        config.baud_rate = BAUD_RATE_9600;
-        config.data_bits = DATA_BITS_8;
-        config.stop_bits = STOP_BITS_1;
-        config.parity = PARITY_NONE;
-        /* 打开设备后才可修改串口配置参数 */
-        rt_device_control(dlt645_device, RT_DEVICE_CTRL_CONFIG, &config);
-        rt_kprintf("device %s open success \r\n", DLT645_SERIAL_NAME);
+        struct termios opt;
+        //清空串口接收缓冲区
+        tcflush(port->fd, TCIOFLUSH);
+        // 获取串口参数opt
+        tcgetattr(port->fd, &opt);
+
+        // 设置串口输出波特率
+        cfsetospeed(&opt, B9600);
+        //设置串口输入波特率
+        cfsetispeed(&opt, B9600);
+        //设置数据位数
+        opt.c_cflag &= ~CSIZE;
+        opt.c_cflag |= CS8;
+        //校验位
+        opt.c_cflag &= ~PARENB;
+        opt.c_iflag &= ~INPCK;
+        //设置停止位
+        opt.c_cflag &= ~CSTOPB;
+
+        opt.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+        printf("Device %s on fd %d is set to 9600bps,8N1\n", DLT645_SERIAL_NAME, port->fd);
+
+        //更新配置
+        tcsetattr(port->fd, TCSANOW, &opt);
     }
 
-    //信号量初始化
-    if (rt_sem_init(&dlt645_receive_sem, "receive_sem", 0, RT_IPC_FLAG_FIFO) == RT_EOK)
-    {
-        dlt645_port.dlt645_sem = &dlt645_receive_sem;
-    }
-    else
-    {
-        return -RT_ERROR;
-    }
-
-    //设置串口接收回调函数
-    rt_device_set_rx_indicate(dlt645_device, uart_handler);
-    //485控制引脚初始化
-    rt_pin_mode(GET_PIN(A,15),PIN_MODE_OUTPUT);
-    return  RT_EOK;
+    return 0;
 }
 
+const dlt645_backend_t dlt645_backend = {
+    dlt645_port_select,
+    dlt645_hw_write,
+    dlt645_hw_read};
+
 //645结构体注册
-static dlt645_t dlt645 = {
+dlt645_t dlt645 = {
     {0},
     0,
-    dlt645_hw_write,
-    dlt645_hw_read,
-    (void *)&dlt645_port};
+    1500,
+    (void *)&dlt645_port,
+    &dlt645_backend};

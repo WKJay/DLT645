@@ -4,7 +4,8 @@
 #include "dlt645.h"
 
 #ifdef DLT645_DEBUG
-#define DLT645_LOG kprintf
+#include <stdio.h>
+#define DLT645_LOG printf
 #else
 #define DLT645_LOG(...)
 #endif
@@ -38,8 +39,6 @@
 #define C_FU_EXT 1          //有后续帧
 
 #define C_CODE_MASK 0x1F    //功能码标志位
-
-
 
 //645 公共校验
 extern int dlt645_common_check(uint8_t *msg, int len, uint8_t *addr);
