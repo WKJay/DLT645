@@ -2,6 +2,7 @@
 #define _DLT645_H
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <sys/select.h>
 #include <sys/time.h>
 
@@ -12,10 +13,10 @@
 #define DLT645_DEFAULT_RESPONSE_TIMEOUT 500 //500ms
 #define MAX_DEVICE_NAME_LEN 10              //最大设备名长度
 
-#define dlt_malloc rt_malloc
-#define dlt_free rt_free
+#define dlt645_malloc malloc
+#define dlt645_free free
 
-#define DLT645_DEBUG 
+#define DLT645_DEBUG
 
 typedef struct dlt645 dlt645_t;
 
@@ -42,6 +43,9 @@ typedef enum
     DLT645_1997
 } dlt645_protocal;
 
+extern dlt645_t *dlt645_new_ctx(const char *device,
+                                int baud, char parity, uint8_t data_bit, uint8_t stop_bit, uint8_t is_rs485);
+extern void dlt645_close(dlt645_t *ctx);
 //设置从机地址
 extern void dlt645_set_addr(dlt645_t *ctx, uint8_t *addr);
 //设置调试开关
@@ -52,5 +56,7 @@ extern int dlt645_read_data(dlt645_t *ctx, uint32_t code, uint8_t *read_data, dl
 extern uint32_t dec_to_bcd(uint32_t val);
 //字符串转BCD形式
 extern int str_to_bcd(char *str, uint8_t *bcd_store_address, uint16_t bcd_len);
+
+extern void dlt645_set_response_timeout(dlt645_t *ctx, uint32_t timeout_ms);
 
 #endif

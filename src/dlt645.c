@@ -10,6 +10,7 @@
     Modify:     
 *************************************************/
 #include "dlt645_private.h"
+#include "dlt645_port.h"
 #include "dlt645_1997.h"
 #include "dlt645_2007.h"
 #include <string.h>
@@ -141,4 +142,39 @@ int dlt645_read_data(dlt645_t *ctx,
         break;
     }
     return rs;
+}
+
+void dlt645_close(dlt645_t *ctx)
+{
+    if (ctx)
+    {
+        dlt645_port_close(ctx->port_data);
+        dlt645_free(ctx);
+    }
+}
+
+void dlt645_set_response_timeout(dlt645_t *ctx, uint32_t timeout_ms)
+{
+    ctx->response_timeout = timeout_ms;
+}
+
+dlt645_t *dlt645_new_ctx(const char *device,
+                         int baud, char parity, uint8_t data_bit, uint8_t stop_bit, uint8_t is_rs485)
+{
+    dlt645_t *ctx = dlt645_malloc(sizeof(dlt645_t));
+    if (ctx == NULL)
+    {
+        DLT645_LOG("no memory available!\r\n");
+    }
+    else
+    {
+        memset(ctx, 0, sizeof(dlt645_t));
+        if (dlt645_port_init(ctx, device, baud, parity, data_bit, stop_bit, is_rs485) < 0)
+        {
+            DLT645_LOG("dlt645 port init failed!\r\n");
+            dlt645_free(ctx);
+            ctx = NULL;
+        }
+    }
+    return ctx;
 }

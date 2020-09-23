@@ -2,9 +2,9 @@
 #define __DLT645_PORT_H
 #include "dlt645.h"
 
-//对外提供环境声明
-extern dlt645_t dlt645;
 //645采集硬件层初始化
-int dlt645_port_init(void);
+int dlt645_port_init(dlt645_t*ctx, const char *device, int baud, char parity, uint8_t data_bit, uint8_t stop_bit, uint8_t is_rs485);
+
+void dlt645_port_close(void *port_data);
 
 #endif
