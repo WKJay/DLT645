@@ -13,7 +13,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-#include "dlt645.h"
+#include "serial_linux.h"
 
 #define DEVICE_NAME "/dev/ttyUSB0"
 //dlt645 采集测试标识符 （A相电压）
@@ -61,18 +61,27 @@ static void stop(int param)
  */
 int main(void)
 {
+    serial_linux_param_t param;
     signal(SIGINT, stop);
     //dlt645 硬件层初始化
-    dlt645 = dlt645_new_ctx(DEVICE_NAME, 9600, 'N', 8, 1, 0);
-    dlt645_set_response_timeout(dlt645, 1500);
+    param.device_name = DEVICE_NAME;
+    param.baud = SERIAL_B9600;
+    param.parity = PARITY_NONE;
+    param.data_bits = DATA_BITS_8;
+    param.stop_bits = STOP_BITS_1;
+    param.mode = RS232;
+
+    dlt645 = dlt645_new_serial_linux(&param);
     if (dlt645 == NULL)
     {
         return -1;
     }
+
+    dlt645_set_response_timeout(dlt645, 1500);
     while (1)
     {
         //采集测试
         dlt645_read_test();
-        usleep(1000 * 1000);
+        sleep(1);
     }
 }

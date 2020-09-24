@@ -1,4 +1,4 @@
-CFLAGS = -Wall -std=c99 -I./inc -I./port
+CFLAGS = -Wall -std=c99 -I./inc -I./port 
 LIB = -lm
 LINK = 
 CC = gcc

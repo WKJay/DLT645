@@ -10,7 +10,6 @@
     Modify:     
 *************************************************/
 #include "dlt645_private.h"
-#include "dlt645_port.h"
 #include "dlt645_1997.h"
 #include "dlt645_2007.h"
 #include <string.h>
@@ -30,18 +29,12 @@
 int dlt645_receive_msg(dlt645_t *ctx, uint8_t *msg, uint16_t len, uint32_t code, dlt645_protocal protocal)
 {
     int rc;
-    rc = ctx->backend->select(ctx);
-    if (rc < 0)
-    {
-        return -1;
-    }
-    else if (rc == 0)
-    {
-        DLT645_LOG("receive timeout\r\n");
-        return -1;
-    }
 
     rc = ctx->backend->read(ctx, msg, len);
+    if (rc <= 0)
+    {
+        return -1;
+    }
 
     if (protocal == DLT645_1997)
     {
@@ -74,6 +67,39 @@ int dlt645_send_msg(dlt645_t *ctx, uint8_t *msg, int len)
     msg[len - 2] = _crc(msg, len - 2);
 
     return ctx->backend->write(ctx, msg, len);
+}
+
+/**
+ * Name:    dlt645_read_data（用户调用）
+ * Brief:   根据645协议类型读取数据
+ * Input:
+ *  @ctx:           645环境句柄
+ *  @addr:          从站地址
+ *  @code:          标识符
+ *  @read_data:     读取数据存储地址
+ *  @protocal:      协议类型
+ * Output:  成功返回数据长度，失败返回-1
+ */
+int dlt645_read_data(dlt645_t *ctx,
+                     uint32_t code,
+                     uint8_t *read_data,
+                     dlt645_protocal protocal)
+{
+    int rs = -1;
+
+    switch (protocal)
+    {
+    case DLT645_1997:
+        rs = dlt645_1997_read_data(ctx, code, read_data);
+        break;
+    case DLT645_2007:
+        rs = dlt645_2007_read_data(ctx, code, read_data);
+        break;
+    default:
+        DLT645_LOG("unrecognized protocal!\r\n");
+        break;
+    }
+    return rs;
 }
 
 /**
@@ -111,46 +137,26 @@ int dlt645_set_debug(dlt645_t *ctx, int flag)
     return 0;
 }
 
-/**
- * Name:    dlt645_read_data（用户调用）
- * Brief:   根据645协议类型读取数据
- * Input:
- *  @ctx:           645环境句柄
- *  @addr:          从站地址
- *  @code:          标识符
- *  @read_data:     读取数据存储地址
- *  @protocal:      协议类型
- * Output:  成功返回数据长度，失败返回-1
- */
-int dlt645_read_data(dlt645_t *ctx,
-                     uint32_t code,
-                     uint8_t *read_data,
-                     dlt645_protocal protocal)
+int dlt645_set_backend(dlt645_t *ctx, const dlt645_backend_t *backend)
 {
-    int rs = -1;
-
-    switch (protocal)
+    if (backend == NULL)
     {
-    case DLT645_1997:
-        rs = dlt645_1997_read_data(ctx, code, read_data);
-        break;
-    case DLT645_2007:
-        rs = dlt645_2007_read_data(ctx, code, read_data);
-        break;
-    default:
-        DLT645_LOG("unrecognized protocal!\r\n");
-        break;
+        DLT645_LOG("no backend found\r\n");
+        return -1;
     }
-    return rs;
-}
-
-void dlt645_close(dlt645_t *ctx)
-{
-    if (ctx)
+    else if (backend->read == NULL || backend->write == NULL)
     {
-        dlt645_port_close(ctx->port_data);
-        dlt645_free(ctx);
+        DLT645_LOG("no read or write backend, please check\r\n");
+        return -1;
     }
+    else if (backend->close == NULL)
+    {
+        DLT645_LOG("no close backend, please check\r\n");
+        return -1;
+    }
+
+    ctx->backend = backend;
+    return 0;
 }
 
 void dlt645_set_response_timeout(dlt645_t *ctx, uint32_t timeout_ms)
@@ -158,23 +164,16 @@ void dlt645_set_response_timeout(dlt645_t *ctx, uint32_t timeout_ms)
     ctx->response_timeout = timeout_ms;
 }
 
-dlt645_t *dlt645_new_ctx(const char *device,
-                         int baud, char parity, uint8_t data_bit, uint8_t stop_bit, uint8_t is_rs485)
+void dlt645_ctx_init_default(dlt645_t *ctx)
 {
-    dlt645_t *ctx = dlt645_malloc(sizeof(dlt645_t));
-    if (ctx == NULL)
+    memset(ctx, 0, sizeof(dlt645_t));
+}
+
+void dlt645_close(dlt645_t *ctx)
+{
+    if (ctx)
     {
-        DLT645_LOG("no memory available!\r\n");
+        DLT645_LOG("close ctx\r\n");
+        ctx->backend->close(ctx);
     }
-    else
-    {
-        memset(ctx, 0, sizeof(dlt645_t));
-        if (dlt645_port_init(ctx, device, baud, parity, data_bit, stop_bit, is_rs485) < 0)
-        {
-            DLT645_LOG("dlt645 port init failed!\r\n");
-            dlt645_free(ctx);
-            ctx = NULL;
-        }
-    }
-    return ctx;
 }

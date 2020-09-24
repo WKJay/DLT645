@@ -22,7 +22,7 @@ typedef struct dlt645 dlt645_t;
 
 typedef struct _dlt645_backend
 {
-    int (*select)(dlt645_t *ctx);
+    void (*close)(dlt645_t *ctx);                                  //release
     int (*write)(struct dlt645 *ctx, uint8_t *buf, uint16_t len); //底层写函数
     int (*read)(struct dlt645 *ctx, uint8_t *msg, uint16_t len);  //底层读函数
 } dlt645_backend_t;
@@ -43,11 +43,8 @@ typedef enum
     DLT645_1997
 } dlt645_protocal;
 
-extern dlt645_t *dlt645_new_ctx(const char *device,
-                                int baud, char parity, uint8_t data_bit, uint8_t stop_bit, uint8_t is_rs485);
+extern void dlt645_ctx_init_default(dlt645_t *ctx);
 extern void dlt645_close(dlt645_t *ctx);
-//设置从机地址
-extern void dlt645_set_addr(dlt645_t *ctx, uint8_t *addr);
 //设置调试开关
 extern int dlt645_set_debug(dlt645_t *ctx, int flag);
 //数据采集
@@ -58,5 +55,9 @@ extern uint32_t dec_to_bcd(uint32_t val);
 extern int str_to_bcd(char *str, uint8_t *bcd_store_address, uint16_t bcd_len);
 
 extern void dlt645_set_response_timeout(dlt645_t *ctx, uint32_t timeout_ms);
+extern int dlt645_set_backend(dlt645_t *ctx, const dlt645_backend_t *backend);
+//设置从机地址
+extern void dlt645_set_addr(dlt645_t *ctx, uint8_t *addr);
+
 
 #endif
