@@ -1,7 +1,7 @@
 #ifndef __DLT645_1997_PRIVATE_H
 #define __DLT645_1997_PRIVATE_H
 
-#define DL645_1997_RD_CMD_LEN 14 //读取数据命令的长度
+#define DLT645_1997_RD_CMD_LEN 14 //读取数据命令的长度
 
 //功能码
 #define C_1997_CODE_BRC 0x08    //广播校时

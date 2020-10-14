@@ -23,23 +23,26 @@
  *  @code:  操作码
  * Output:  校验成功：0 ，失败 -1
  */
-int dlt645_1997_recv_check(uint8_t *msg, int len, uint8_t* addr, uint32_t code)
+int dlt645_1997_recv_check(uint8_t *msg, int len, uint8_t *addr, uint32_t code)
 {
+    uint8_t *code_buf = (uint8_t *)&code;
+    uint32_t *resp_code_ptr = (uint32_t *)((uint8_t *)msg + DLT645_DATA_POS);
+    uint32_t resp_code = 0;
+
     if (dlt645_common_check(msg, len, addr) < 0)
     {
         return -1;
     }
-    if (msg[DL645_CONTROL_POS] == 0x84)
+    if (msg[DLT645_CONTROL_POS] == 0x84)
         return 0;
-
-    uint8_t *code_buf = (uint8_t *)&code;
 
     for (uint8_t i = 0; i < 2; i++)
     {
         code_buf[i] += 0x33;
     }
 
-    if (*((uint16_t *)(msg + DL645_DATA_POS)) != code)
+    memcpy(&resp_code, resp_code_ptr, 4);
+    if (resp_code != code)
         return -1;
 
     return 0;
@@ -110,32 +113,32 @@ int dlt645_1997_read_data(dlt645_t *ctx,
                           uint32_t code,
                           uint8_t *read_data)
 {
-    uint8_t send_buf[DL645_1997_RD_CMD_LEN];
-    uint8_t read_buf[DL645_RESP_LEN];
+    uint8_t send_buf[DLT645_1997_RD_CMD_LEN];
+    uint8_t read_buf[DLT645_RESP_LEN];
 
     memset(read_buf, 0, sizeof(read_buf));
     memset(send_buf, 0, sizeof(send_buf));
 
-    memcpy(send_buf + 1, ctx->addr, DL645_ADDR_LEN);
-    send_buf[DL645_CONTROL_POS] = C_1997_CODE_RD;
-    send_buf[DL645_LEN_POS] = 2;
+    memcpy(send_buf + 1, ctx->addr, DLT645_ADDR_LEN);
+    send_buf[DLT645_CONTROL_POS] = C_1997_CODE_RD;
+    send_buf[DLT645_LEN_POS] = 2;
 
     uint8_t send_code[2] = {0};
     send_code[0] = (code & 0xff) + 0x33;
     send_code[1] = ((code >> 8) & 0xff) + 0x33;
-    memcpy(send_buf + DL645_DATA_POS, send_code, 2);
+    memcpy(send_buf + DLT645_DATA_POS, send_code, 2);
 
-    if (dlt645_send_msg(ctx, send_buf, DL645_1997_RD_CMD_LEN) < 0)
+    if (dlt645_send_msg(ctx, send_buf, DLT645_1997_RD_CMD_LEN) < 0)
     {
         DLT645_LOG("send data error!\n");
         return -1;
     }
 
-    if (dlt645_receive_msg(ctx, read_buf, DL645_RESP_LEN, code, DLT645_1997) < 0)
+    if (dlt645_receive_msg(ctx, read_buf, DLT645_RESP_LEN, code, DLT645_1997) < 0)
     {
         DLT645_LOG("receive msg error!\n");
         return -1;
     }
 
-    return dlt645_1997_parsing_data(code, read_buf + DL645_DATA_POS + 2, read_buf[DL645_LEN_POS] - 2, read_data);
+    return dlt645_1997_parsing_data(code, read_buf + DLT645_DATA_POS + 2, read_buf[DLT645_LEN_POS] - 2, read_data);
 }

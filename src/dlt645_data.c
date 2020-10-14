@@ -56,9 +56,9 @@ int dlt645_common_check(uint8_t *msg, int len, uint8_t *addr)
         return -1;
     }
     //数据帧标志校验
-    if (msg[0] != DL645_START_CODE ||
-        msg[DL645_ADDR_LEN + 1] != DL645_START_CODE ||
-        msg[len - 1] != DL645_STOP_CODE)
+    if (msg[0] != DLT645_START_CODE ||
+        msg[DLT645_ADDR_LEN + 1] != DLT645_START_CODE ||
+        msg[len - 1] != DLT645_STOP_CODE)
     {
         DLT645_LOG("check code error!\n");
         return -1;
@@ -71,13 +71,13 @@ int dlt645_common_check(uint8_t *msg, int len, uint8_t *addr)
         return -1;
     }
     //控制码主从校验
-    if ((msg[DL645_CONTROL_POS] & C_TD_MASK) == (C_TD_MASTER << C_TD_POS))
+    if ((msg[DLT645_CONTROL_POS] & C_TD_MASK) == (C_TD_MASTER << C_TD_POS))
     {
         DLT645_LOG("check control direction error!\n");
         return -1;
     }
     //控制码应答校验
-    if ((msg[DL645_CONTROL_POS] & C_ACK_MASK) == (C_ACK_ERR << C_ACK_POS))
+    if ((msg[DLT645_CONTROL_POS] & C_ACK_MASK) == (C_ACK_ERR << C_ACK_POS))
     {
         DLT645_LOG("check ACK error!\n");
         return msg[len - 3];

@@ -61,9 +61,9 @@ int dlt645_receive_msg(dlt645_t *ctx, uint8_t *msg, uint16_t len, uint32_t code,
  */
 int dlt645_send_msg(dlt645_t *ctx, uint8_t *msg, int len)
 {
-    msg[0] = DL645_START_CODE;
-    msg[DL645_ADDR_LEN + 1] = DL645_START_CODE;
-    msg[len - 1] = DL645_STOP_CODE;
+    msg[0] = DLT645_START_CODE;
+    msg[DLT645_ADDR_LEN + 1] = DLT645_START_CODE;
+    msg[len - 1] = DLT645_STOP_CODE;
     msg[len - 2] = _crc(msg, len - 2);
 
     return ctx->backend->write(ctx, msg, len);
@@ -120,7 +120,7 @@ void dlt645_set_addr(dlt645_t *ctx, uint8_t *addr)
     {
         addr_temp[5 - i] = addr[i];
     }
-    memcpy(ctx->addr, addr_temp, DL645_ADDR_LEN);
+    memcpy(ctx->addr, addr_temp, DLT645_ADDR_LEN);
 }
 
 /**

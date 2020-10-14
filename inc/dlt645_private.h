@@ -10,18 +10,18 @@
 #define DLT645_LOG(...)
 #endif
 
-#define DL645_START_CODE 0x68
-#define DL645_STOP_CODE 0x16
+#define DLT645_START_CODE 0x68
+#define DLT645_STOP_CODE 0x16
 
-#define DL645_PREMBLE_ENABLE 0 //前导码使能标记
-#define DL645_PREMBLE 0xFE     //前导码
+#define DLT645_PREMBLE_ENABLE 0 //前导码使能标记
+#define DLT645_PREMBLE 0xFE     //前导码
 
-#define DL645_ADDR_LEN 6    //设备地址长度
-#define DL645_CONTROL_POS 8 //控制码位置
-#define DL645_LEN_POS 9     //长度位置
-#define DL645_DATA_POS 10   //数据位置
-#define DL645_WR_LEN 50     //写入数据命令的长度
-#define DL645_RESP_LEN 60   //读取数据命令的长度
+#define DLT645_ADDR_LEN 6    //设备地址长度
+#define DLT645_CONTROL_POS 8 //控制码位置
+#define DLT645_LEN_POS 9     //长度位置
+#define DLT645_DATA_POS 10   //数据位置
+#define DLT645_WR_LEN 50     //写入数据命令的长度
+#define DLT645_RESP_LEN 60   //读取数据命令的长度
 
 #define C_TD_MASK 0x80      //主从标志位
 #define C_TD_POS 7          //主从标志位比特位
