@@ -42,6 +42,14 @@ typedef enum _serial_mode
     RS232
 } serial_mode_t;
 
+//数据包读取步骤
+typedef enum {
+    _STEP_START,
+    _STEP_META,
+    _STEP_DATA,
+    _STEP_END,
+} _step_t;
+
 //645 硬件接口参数
 typedef struct _serial_linux_param
 {

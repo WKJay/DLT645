@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "dlt645_private.h"
 #include <unistd.h>
 #include <termios.h>
 
@@ -62,22 +63,67 @@ static int serial_linux_hw_read(dlt645_t *ctx, uint8_t *msg, uint16_t len)
 {
     //实际接收长度
     int rc = 0;
+    int length_to_read = 1, msg_length = 0;
     serial_port_t *port = ctx->port_data;
+    _step_t step;
 
-    rc = serial_select(ctx);
-    if (rc < 0)
+    step = _STEP_START;
+    while (length_to_read != 0)
     {
-        printf("select error on fd %d\r\n", port->fd);
-        return -1;
-    }
-    else if (rc == 0)
-    {
-        printf("select timeout on fd %d\r\n", port->fd);
-        return -0;
+        rc = serial_select(ctx);
+        if (rc < 0)
+        {
+            printf("select error on fd %d\r\n", port->fd);
+            return -1;
+        }
+        else if (rc == 0)
+        {
+            printf("select timeout on fd %d\r\n", port->fd);
+            return 0;
+        }
+        rc = read(port->fd, msg + msg_length, length_to_read);
+        if (rc < 0)
+        {
+            printf("read error on fd %d\r\n", port->fd);
+            return -1;
+        }
+        //更新已收到的数据长度以及待接收的数据长度
+        msg_length += rc;
+        length_to_read -= rc;
+
+        if (length_to_read == 0)
+        {
+            switch (step)
+            {
+            case _STEP_START:
+                if (msg[0] == DLT645_START_CODE)
+                {
+                    length_to_read = 9;
+                    step = _STEP_META;
+                }
+                break;
+            case _STEP_META:
+                length_to_read = msg[DLT645_LEN_POS];
+                step = _STEP_DATA;
+                break;
+            case _STEP_DATA:
+                length_to_read = 2;
+                step = _STEP_END;
+                break;
+            case _STEP_END:
+                if (msg[msg_length - 1] != DLT645_STOP_CODE)
+                {
+                    printf("dlt645 frame error,no stop code\r\n");
+                    return -1;
+                }
+                break;
+            default:
+                break;
+            }
+        }
     }
 
-    rc = read(port->fd, msg, len);
-    return rc;
+    return msg_length;
 }
 
 /**
@@ -104,15 +150,14 @@ static void _port_close(serial_port_t *port)
         tcsetattr(port->fd, TCSANOW, &port->old_tios);
         if (port->fd)
         {
-            if(close(port->fd)==0)
+            if (close(port->fd) == 0)
             {
                 printf("close fd:%d success\r\n", port->fd);
             }
             else
             {
-                 printf("close fd:%d failed\r\n", port->fd);
+                printf("close fd:%d failed\r\n", port->fd);
             }
-            
         }
     }
 }
