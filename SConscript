@@ -3,7 +3,7 @@ Import('rtconfig')
 from building import *
 
 cwd = GetCurrentDir()
-src = Glob("src/*")
+src = Glob("src/*.c")
 
 # add dlt645 sample
 if GetDepend('DLT645_USING_SAMPLE'):
