@@ -99,7 +99,10 @@ static int dlt645_hw_read(dlt645_t *ctx, uint8_t *msg ,uint16_t len)
 static int dlt645_hw_write(dlt645_t *ctx, uint8_t *buf, uint16_t len)
 {
     //串口发送数据
-    return rt_device_write(dlt645_device,0,buf,len);
+    rt_pin_write(GET_PIN(A,15), PIN_HIGH);
+    int ret = rt_device_write(dlt645_device,0,buf,len);
+    rt_pin_write(GET_PIN(A,15), PIN_LOW);
+    return ret;
 }
 
 
@@ -152,7 +155,7 @@ int dlt645_port_init(void)
 }
 
 //645结构体注册
-static dlt645_t dlt645 = {
+dlt645_t dlt645 = {
     {0},
     0,
     dlt645_hw_write,
