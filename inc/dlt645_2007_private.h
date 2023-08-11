@@ -1,8 +1,9 @@
 #ifndef __DLT645_2007_PRIVATE_H
 #define __DLT645_2007_PRIVATE_H
 
+#include "dlt645_private.h"
 
-#define DL645_2007_RD_CMD_LEN 16 //读取数据命令的长度
+#define DL645_2007_RD_CMD_LEN (DL645_PREMBLE_LEN + 16) //读取数据命令的长度
 
 //功能码
 #define C_2007_CODE_BRC 0x08    //广播校时

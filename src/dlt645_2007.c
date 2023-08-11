@@ -170,7 +170,8 @@ int dlt645_2007_read_data(dlt645_t *ctx,
     memset(read_buf, 0, sizeof(read_buf));
     memset(send_buf, 0, sizeof(send_buf));
 
-    memcpy(send_buf + 1, ctx->addr, DL645_ADDR_LEN);
+    memset(send_buf, DL645_PREMBLE_CODE, DL645_PREMBLE_LEN);
+    memcpy(send_buf + DL645_ADDR_POS, ctx->addr, DL645_ADDR_LEN);
 
     send_buf[DL645_CONTROL_POS] = C_2007_CODE_RD;
     send_buf[DL645_LEN_POS] = 4;
@@ -182,6 +183,7 @@ int dlt645_2007_read_data(dlt645_t *ctx,
     send_code[3] = ((code >> 24) & 0xff) + 0x33;
 
     memcpy(send_buf + DL645_DATA_POS, send_code, 4);
+
     if (dlt645_send_msg(ctx, send_buf, DL645_2007_RD_CMD_LEN) < 0)
     {
         DLT645_LOG("send data error!\n");

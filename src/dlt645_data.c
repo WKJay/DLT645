@@ -56,15 +56,15 @@ int dlt645_common_check(uint8_t *msg, int len, uint8_t *addr)
         return -1;
     }
     //数据帧标志校验
-    if (msg[0] != DL645_START_CODE ||
-        msg[DL645_ADDR_LEN + 1] != DL645_START_CODE ||
+    if (msg[DL645_START_POS] != DL645_START_CODE ||
+        msg[DL645_START_POS + DL645_ADDR_LEN + 1] != DL645_START_CODE ||
         msg[len - 1] != DL645_STOP_CODE)
     {
         DLT645_LOG("check code error!\n");
         return -1;
     }
     //CRC校验
-    uint8_t crc = _crc(msg, len - 2);
+    uint8_t crc = _crc(msg + DL645_PREMBLE_LEN, len - DL645_PREMBLE_LEN - 2);
     if (crc != msg[len - 2])
     {
         DLT645_LOG("check crc error!\n");
@@ -85,7 +85,14 @@ int dlt645_common_check(uint8_t *msg, int len, uint8_t *addr)
     //从站地址校验
     if (memcmp(msg + 1, addr, 6) != 0)
     {
-        return -1;
+        // 万能地址无需校验
+        for(int i = 0; i < 6; i++)
+        {
+            if(addr[i] != DL645_GADDR_CODE)
+            {
+                return -1;
+            }
+        }
     }
 
     return 0;

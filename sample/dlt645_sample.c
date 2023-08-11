@@ -17,7 +17,7 @@
 //dlt645 采集测试标识符 （A相电压）
 #define DLT645_2007_READ_TEST_CODE 0x02010100
 #define DLT645_1997_READ_TEST_CODE 0xB611
-uint8_t test_addr[6] = {0x00,0x00,0x00,0x00,0x00,0x01};
+uint8_t test_addr[6] = {0xAA,0xAA,0xAA,0xAA,0xAA,0xAA};
 
 /**
  * Name:    dlt645_read_test

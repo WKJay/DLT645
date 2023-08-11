@@ -15,6 +15,8 @@
 
 //DLT645采集使用的串口名
 #define DLT645_SERIAL_NAME "uart4"
+//RS485的收发控制引脚，如果驱动层已有485驱动，不使用填-1
+#define DLT645_RS485_DE_PIN -1  //如果用PA15，改为15
 
 //DL/T 645硬件拓展结构体
 typedef struct
@@ -98,8 +100,19 @@ static int dlt645_hw_read(dlt645_t *ctx, uint8_t *msg ,uint16_t len)
  */
 static int dlt645_hw_write(dlt645_t *ctx, uint8_t *buf, uint16_t len)
 {
+    if(DLT645_RS485_DE_PIN != -1)
+    {
+        rt_pin_write(DLT645_RS485_DE_PIN, PIN_HIGH);
+    }
+
     //串口发送数据
-    return rt_device_write(dlt645_device,0,buf,len);
+    int ret = rt_device_write(dlt645_device,0,buf,len);
+
+    if(DLT645_RS485_DE_PIN != -1)
+    {
+        rt_pin_write(DLT645_RS485_DE_PIN, PIN_LOW);
+    }
+    return ret;
 }
 
 
@@ -146,13 +159,17 @@ int dlt645_port_init(void)
 
     //设置串口接收回调函数
     rt_device_set_rx_indicate(dlt645_device, uart_handler);
+
     //485控制引脚初始化
-    rt_pin_mode(GET_PIN(A,15),PIN_MODE_OUTPUT);
+    if(DLT645_RS485_DE_PIN != -1)
+    {
+        rt_pin_mode(DLT645_RS485_DE_PIN, PIN_MODE_OUTPUT);
+    }
     return  RT_EOK;
 }
 
 //645结构体注册
-static dlt645_t dlt645 = {
+dlt645_t dlt645 = {
     {0},
     0,
     dlt645_hw_write,

@@ -55,10 +55,10 @@ int dlt645_receive_msg(dlt645_t *ctx, uint8_t *msg, uint16_t len, uint32_t code,
  */
 int dlt645_send_msg(dlt645_t *ctx, uint8_t *msg, int len)
 {
-    msg[0] = DL645_START_CODE;
-    msg[DL645_ADDR_LEN + 1] = DL645_START_CODE;
+    msg[DL645_START_POS] = DL645_START_CODE;
+    msg[DL645_START_POS + DL645_ADDR_LEN + 1] = DL645_START_CODE;
     msg[len - 1] = DL645_STOP_CODE;
-    msg[len - 2] = _crc(msg, len - 2);
+    msg[len - 2] = _crc(msg + DL645_PREMBLE_LEN, len - DL645_PREMBLE_LEN - 2);
 
     return ctx->write(ctx, msg, len);
 }
