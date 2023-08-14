@@ -2,7 +2,7 @@
 
 本软件包用于 DL/T 645 协议的采集与数据处理。在硬件层的移植（主要针对于串口收发数据）完成之后， **用户仅需调用一个API即可完成针对于特定协议（DL/T 1997 或 DL/T 2007）的标识符数据读取、处理与存储。** 使用户无需关注请求数据的封包与接收数据的解包等复杂的协议内部操作，真正做到 **一键采集** 。
 
-当然，由于本人精力有限，无法第一时间考虑并编写所有可能的情况与功能，所以在软件包的初期其功能只是根据我所用到的功能进行编写，无法涵盖所有的需求。并且可能会有一些小问题。但本文档今后会加入详细的功能开发指南，供开发成员们能够很方便地根据自己的需求进行功能的添加与修改。随着时间的推移，本软件包会逐步趋向于完善，也希望使用本软件包的开发人员们能够加入到软件包的完善中来，为该软件包的成长提供一份宝贵的力量！
+当然，由于本人精力有限，无法第一时间考虑并编写所有可能的情况与功能，所以在软件包的初期其功能只是根据个人所用到的功能进行编写，无法涵盖所有的需求。也可能会有一些小问题。不过随着时间的推移，本软件包会逐步趋向于完善，也希望使用本软件包的开发人员们能够加入到软件包的完善中来，为该软件包的成长提供一份宝贵的力量！
 
 ### 目前支持的功能：
 
@@ -123,6 +123,8 @@ int (*read) (struct dlt645 *ctx, uint8_t *msg, uint16_t len);
 
 //DLT645采集使用的串口名
 #define DLT645_SERIAL_NAME "uart4"
+//RS485的收发控制引脚，如果驱动层已有485驱动，不使用填-1
+#define DLT645_RS485_DE_PIN -1  //如果用PA15，改为15
 
 //DL/T 645硬件拓展结构体
 typedef struct
@@ -206,8 +208,19 @@ static int dlt645_hw_read(dlt645_t *ctx, uint8_t *msg ,uint16_t len)
  */
 static int dlt645_hw_write(dlt645_t *ctx, uint8_t *buf, uint16_t len)
 {
+    if(DLT645_RS485_DE_PIN != -1)
+    {
+        rt_pin_write(DLT645_RS485_DE_PIN, PIN_HIGH);
+    }
+
     //串口发送数据
-    return rt_device_write(dlt645_device,0,buf,len);
+    int ret = rt_device_write(dlt645_device,0,buf,len);
+
+    if(DLT645_RS485_DE_PIN != -1)
+    {
+        rt_pin_write(DLT645_RS485_DE_PIN, PIN_LOW);
+    }
+    return ret;
 }
 
 
@@ -254,13 +267,17 @@ int dlt645_port_init(void)
 
     //设置串口接收回调函数
     rt_device_set_rx_indicate(dlt645_device, uart_handler);
+
     //485控制引脚初始化
-    rt_pin_mode(GET_PIN(A,15),PIN_MODE_OUTPUT);
+    if(DLT645_RS485_DE_PIN != -1)
+    {
+        rt_pin_mode(DLT645_RS485_DE_PIN, PIN_MODE_OUTPUT);
+    }
     return  RT_EOK;
 }
 
 //645结构体注册
-static dlt645_t dlt645 = {
+dlt645_t dlt645 = {
     {0},
     0,
     dlt645_hw_write,
@@ -363,18 +380,20 @@ else
  File name:     sample.c
  Description:   DLT645 软件包使用样例
  History:
- 1. Version:    
+ 1. Version:
     Date:       2019-09-23
     Author:     wangjunjie
-    Modify:     
+    Modify:
 *************************************************/
 #include "dlt645.h"
+#include "rtthread.h"
+#include "stdio.h"
 #include "dlt645_port.h"
 
-//dlt645 采集测试标识符 （A相电压）
+// dlt645 采集测试标识符 （A相电压）
 #define DLT645_2007_READ_TEST_CODE 0x02010100
 #define DLT645_1997_READ_TEST_CODE 0xB611
-uint8_t test_addr[6] = {0x00,0x00,0x00,0x00,0x00,0x01};
+uint8_t test_addr[6] = {0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA};
 
 /**
  * Name:    dlt645_read_test
@@ -382,49 +401,62 @@ uint8_t test_addr[6] = {0x00,0x00,0x00,0x00,0x00,0x01};
  * Input:   None
  * Output:  None
  */
-static void dlt645_read_test(void)
-{
+static void dlt645_read_test(void) {
     uint8_t read_buf[4];
     rt_memset(read_buf, 0, 4);
-    
-    //设置从机地址
-    dlt645_set_addr(&dlt645,test_addr);
-    
-    //if(dlt645_read_data(&dlt645,DLT645_1997_READ_TEST_CODE,read_buf,DLT645_1997) > 0) //1997采集测试
-    if(dlt645_read_data(&dlt645,DLT645_2007_READ_TEST_CODE,read_buf,DLT645_2007) > 0)  //2007采集测试
+
+    // 设置从机地址
+    dlt645_set_addr(&dlt645, test_addr);
+
+    // 设置debug模式
+    dlt645_set_debug(&dlt645, 0);
+
+    // if(dlt645_read_data(&dlt645,DLT645_1997_READ_TEST_CODE,read_buf,DLT645_1997) > 0) //1997采集测试
+    if (dlt645_read_data(&dlt645, DLT645_2007_READ_TEST_CODE, read_buf, DLT645_2007) > 0)  // 2007采集测试
     {
-        printf("读取成功,A相电压值为: %.2f \r\n",*(float *)read_buf);
-    }
-    else
-    {
+        printf("读取成功,A相电压值为: %.2f \r\n", *(float *)read_buf);
+    } else {
         rt_kprintf("读取失败\r\n");
     }
 }
 
 /**
- * Name:    main
- * Brief:   主函数
+ * Name:    dlt645_entry
+ * Brief:   dlt645协议测试线程
  * Input:   None
  * Output:  None
  */
-int main(void)
-{
-    //dlt645 硬件层初始化
+void dlt645_entry(void *param) {
+    // dlt645 硬件层初始化
     dlt645_port_init();
-    while(1)
-    {
-        //采集测试
+    while (1) {
+        // 采集测试
         dlt645_read_test();
         rt_thread_mdelay(1000);
     }
 }
 
+int dlt645_test(void) {
+    rt_thread_t tid;
+    tid = rt_thread_create("dlt645", dlt645_entry, RT_NULL, 4096, 8, 20);
+    if (tid != RT_NULL) rt_thread_startup(tid);
+    return 0;
+}
+MSH_CMD_EXPORT(dlt645_test, dlt645 test);
+
+
 ```
+终端输入 `dlt645_test` 命令打开采集功能.
 
 ## 五、注意事项
 
 1. 目前插件不支持自动识别前导码，不会自动拼包或者过滤处理；
 2. 如果串口有数据输出和输入但是打印读取失败，考虑是前导码的问题，不同厂商的仪表会有长度不一的前导码。
  - 可以用PC工具发送68开头的数据：68 AA AA AA AA AA AA 68  11 04 33 34 34 35 B1 16
- - 返回的报文68开头前的FE个数就是前导码的长度，然后配置DL645_PREMBLE_LEN即刻。
+ - 返回的报文68开头前的FE个数就是前导码的长度，然后配置DL645_PREMBLE_LEN即可。
 
+## 支持
+
+![支持](./docs/_assets/wechat_support.png)
+
+如果这个软件包解决了你的问题，不妨扫描上面二维码请我喝杯咖啡吧 
