@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define DL645_MAX_READ_LEN 200 //读数据的最大数据长度
-#define DL645_MAX_WRITE_LEN 50 //写数据的最大数据长度
+#define DLT645_MAX_READ_LEN 200 //读数据的最大数据长度
+#define DLT645_MAX_WRITE_LEN 50 //写数据的最大数据长度
 
 // port setting
 #define DLT645_DEFAULT_RESPONSE_TIMEOUT 500 //500ms

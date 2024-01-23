@@ -56,39 +56,39 @@ int dlt645_common_check(uint8_t *msg, int len, uint8_t *addr)
         return -1;
     }
     //数据帧标志校验
-    if (msg[DL645_START_POS] != DL645_START_CODE ||
-        msg[DL645_START_POS + DL645_ADDR_LEN + 1] != DL645_START_CODE ||
-        msg[len - 1] != DL645_STOP_CODE)
+    if (msg[DLT645_START_POS] != DLT645_START_CODE ||
+        msg[DLT645_START_POS + DLT645_ADDR_LEN + 1] != DLT645_START_CODE ||
+        msg[len - 1] != DLT645_STOP_CODE)
     {
         DLT645_LOG("check code error!\n");
         return -1;
     }
     //CRC校验
-    uint8_t crc = _crc(msg + DL645_PREMBLE_LEN, len - DL645_PREMBLE_LEN - 2);
+    uint8_t crc = _crc(msg + DLT645_PREMBLE_LEN, len - DLT645_PREMBLE_LEN - 2);
     if (crc != msg[len - 2])
     {
         DLT645_LOG("check crc error!\n");
         return -1;
     }
     //控制码主从校验
-    if ((msg[DL645_CONTROL_POS] & C_TD_MASK) == (C_TD_MASTER << C_TD_POS))
+    if ((msg[DLT645_CONTROL_POS] & C_TD_MASK) == (C_TD_MASTER << C_TD_POS))
     {
         DLT645_LOG("check control direction error!\n");
         return -1;
     }
     //控制码应答校验
-    if ((msg[DL645_CONTROL_POS] & C_ACK_MASK) == (C_ACK_ERR << C_ACK_POS))
+    if ((msg[DLT645_CONTROL_POS] & C_ACK_MASK) == (C_ACK_ERR << C_ACK_POS))
     {
         DLT645_LOG("check ACK error!\n");
         return msg[len - 3];
     }
     //从站地址校验
-    if (memcmp(msg + DL645_ADDR_POS, addr, 6) != 0)
+    if (memcmp(msg + DLT645_ADDR_POS, addr, 6) != 0)
     {
         // 万能地址无需校验
         for(int i = 0; i < 6; i++)
         {
-            if(addr[i] != DL645_GADDR_CODE)
+            if(addr[i] != DLT645_GADDR_CODE)
             {
                 return -1;
             }
