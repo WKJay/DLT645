@@ -83,7 +83,7 @@ int dlt645_common_check(uint8_t *msg, int len, uint8_t *addr)
         return msg[len - 3];
     }
     //从站地址校验
-    if (memcmp(msg + 1, addr, 6) != 0)
+    if (memcmp(msg + DL645_ADDR_POS, addr, 6) != 0)
     {
         // 万能地址无需校验
         for(int i = 0; i < 6; i++)
