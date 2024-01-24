@@ -106,6 +106,7 @@ jobs:
           sudo apt-get -qq install gcc-multilib libncurses5-dev scons
           sudo python -m pip install --upgrade pip -qq
           pip install requests -qq
+          pip install psutil
           git config --global http.postBuffer 524288000
           python -c "import tools.menuconfig; tools.menuconfig.touch_env()"
           echo "RTT_ROOT=${{ github.workspace }}" >> $GITHUB_ENV
