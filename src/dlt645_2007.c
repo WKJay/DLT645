@@ -132,7 +132,7 @@ int dlt645_2007_parsing_data(uint32_t code, uint8_t *read_data, uint16_t len, ui
         break;
     }
     case DIC_4000403:
-    case DIC_5060101:
+    case DIC_5060001:
     case DIC_7000001:
     case DIC_7000002:
         for (uint16_t i = 0; i < len; i++)
